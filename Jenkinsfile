@@ -1,41 +1,31 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven-3'
-    }
-
     stages {
-        stage('Checkout') {
-            steps {
-                echo 'Récupération du code source...'
-            }
-        }
 
         stage('Build JAR') {
             steps {
                 echo 'Compilation et création du JAR...'
-                sh 'mvn clean package -DskipTests'
+                sh './mvnw clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo 'Construction de l\'image Docker...'
-                sh 'docker build -t springboot-app .'
-                
-                echo 'Chargement de l\'image dans Minikube...'
-                sh 'minikube image load springboot-app'
+                echo 'Construction de l’image Docker...'
+                sh 'docker build -t springboot-app:latest .'
+
+                echo 'Chargement de l’image dans Minikube...'
+                sh 'minikube image load springboot-app:latest'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Déploiement sur le cluster Minikube...'
-                sh 'kubectl apply -f k8s/deployment.yaml'
-                sh 'kubectl apply -f k8s/service.yaml'
-                
-                echo 'Vérification du déploiement...'
+                echo 'Déploiement sur Minikube...'
+                sh 'kubectl apply -f k8s/'
+
+                echo 'État des pods'
                 sh 'kubectl get pods'
             }
         }
@@ -43,10 +33,10 @@ pipeline {
 
     post {
         success {
-            echo 'Le pipeline a réussi !'
+            echo '✅ Pipeline CI/CD exécuté avec succès !'
         }
         failure {
-            echo 'Le pipeline a échoué. Vérifiez les logs ci-dessus.'
+            echo '❌ Pipeline échoué. Vérifie les logs.'
         }
     }
 }
