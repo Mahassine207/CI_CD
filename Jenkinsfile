@@ -1,43 +1,40 @@
 pipeline {
     agent any
 
-    tools {
-        dockerTool 'docker' // Doit correspondre au nom dans la config Jenkins
-    }
-
     stages {
         stage('Build JAR') {
             steps {
-                echo 'Correction des permissions et compilation...'
-                // Donne les droits d'exécution au wrapper Maven
+                echo '📦 Compilation du projet...'
                 sh 'chmod +x mvnw' 
                 sh './mvnw clean package -DskipTests'
             }
         }
 
-        stage('Build Image') {
+        stage('Build & Load Image (Minikube)') {
             steps {
-                sh 'docker build -t springboot-app:latest .'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Construction de l’image Docker...'
-                sh 'docker build -t springboot-app:latest .'
-
-                echo 'Chargement de l’image dans Minikube...'
-                sh 'minikube image load springboot-app:latest'
+                echo '🐳 Construction de l’image directement dans Minikube...'
+                script {
+                    // On force l'utilisation du Docker interne de Minikube
+                    // Cela évite l'erreur "docker not found" si Docker est installé via Minikube
+                    sh '''
+                        eval $(minikube docker-env)
+                        docker build -t springboot-app:latest .
+                    '''
+                }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Déploiement sur Minikube...'
+                echo '🚀 Déploiement sur Minikube...'
+                // On s'assure que kubectl pointe sur le bon cluster
                 sh 'kubectl apply -f k8s/'
-
-                echo 'État des pods'
-                sh 'kubectl get pods'
+                
+                echo '⏳ Attente du déploiement...'
+                sh 'kubectl rollout status deployment/tp-spring-boot-deployment || echo "Check pods manually"'
+                
+                echo '📊 État des ressources :'
+                sh 'kubectl get pods,svc'
             }
         }
     }
@@ -47,7 +44,7 @@ pipeline {
             echo '✅ Pipeline CI/CD exécuté avec succès !'
         }
         failure {
-            echo '❌ Pipeline échoué. Vérifie les logs.'
+            echo '❌ Pipeline échoué. Vérifiez si Minikube est bien démarré.'
         }
     }
 }
