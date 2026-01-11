@@ -1,20 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: springboot-deployment
+  name: tp-spring-boot-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: springboot
+      app: springboot-app
   template:
     metadata:
       labels:
-        app: springboot
+        app: springboot-app
     spec:
       containers:
-      - name: springboot
-        image: springboot-app
-        imagePullPolicy: Never
+      - name: springboot-app
+        image: mahassine180/springboot-app:latest
         ports:
-        - containerPort: 8084 
+        - containerPort: 8084
