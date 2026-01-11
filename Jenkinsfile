@@ -2,10 +2,11 @@ pipeline {
     agent any
 
     stages {
-
         stage('Build JAR') {
             steps {
-                echo 'Compilation et création du JAR...'
+                echo 'Correction des permissions et compilation...'
+                // Donne les droits d'exécution au wrapper Maven
+                sh 'chmod +x mvnw' 
                 sh './mvnw clean package -DskipTests'
             }
         }
