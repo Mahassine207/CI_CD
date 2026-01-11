@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        dockerTool 'docker' // Doit correspondre au nom dans la config Jenkins
+    }
+
     stages {
         stage('Build JAR') {
             steps {
