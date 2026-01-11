@@ -1,12 +1,5 @@
 pipeline {
     agent any
-    stages {
-        stage('Build Image') {
-            steps {
-                sh 'docker build -t springboot-app:latest .'
-            }
-        }
-    }
 
     stages {
         stage('Build JAR') {
@@ -15,6 +8,12 @@ pipeline {
                 // Donne les droits d'exécution au wrapper Maven
                 sh 'chmod +x mvnw' 
                 sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh 'docker build -t springboot-app:latest .'
             }
         }
 
