@@ -2,23 +2,23 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = 'docker-hub-credentials'   
-        IMAGE_NAME = 'mahassine180/springboot-app:latest'   
+        DOCKER_HUB_CREDENTIALS = 'docker-hub-credentials'
+        IMAGE_NAME = 'mahassine180/springboot-app:latest'
     }
 
     stages {
         stage('Build JAR') {
             steps {
                 echo '📦 Compilation du projet...'
-                powershell 'chmod +x mvnw'
-                powershell './mvnw clean package -DskipTests'
+                sh 'chmod +x mvnw'
+                sh './mvnw clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo '🐳 Construction de l’image Docker...'
-                powershell "docker build -t ${IMAGE_NAME} -f Dockerfile ."
+                sh "docker build -t ${IMAGE_NAME} -f Dockerfile ."
             }
         }
 
@@ -26,8 +26,8 @@ pipeline {
             steps {
                 echo '⬆️ Push sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIALS, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                    powershell """
-                        echo $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
+                    sh """
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                         docker push ${IMAGE_NAME}
                     """
                 }
@@ -37,7 +37,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 echo '🚀 Déploiement sur Minikube via Docker Hub...'
-                powershell """
+                sh """
                     kubectl set image deployment/tp-spring-boot-deployment springboot-app=${IMAGE_NAME}
                     kubectl rollout status deployment/tp-spring-boot-deployment
                     kubectl get pods,svc
@@ -48,10 +48,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline CI/CD exécuté avec succès ! Application mise à jour sur Minikube.'
+            echo '✅ Pipeline CI/CD exécuté avec succès !'
         }
         failure {
-            echo 'Pipeline échoué. Vérifie Jenkins, Docker Hub et Minikube.'
+            echo '❌ Pipeline échoué. Vérifie Jenkins, Docker Hub et Minikube.'
         }
     }
 }
